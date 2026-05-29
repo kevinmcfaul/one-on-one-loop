@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A lightweight 1:1 meeting question picker for managers and teammates.">
+    <title>1:1 Loop</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="question-stage" aria-labelledby="app-title">
+        <header class="topbar">
+          <a class="brand" href="./" aria-label="1:1 Loop home">
+            <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+              <path d="M19 40c-8 0-13-5-13-11s5-11 13-11h8" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+              <path d="M45 24c8 0 13 5 13 11s-5 11-13 11h-8" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+              <path d="M24 40h16" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="46" cy="18" r="5" fill="currentColor"/>
+            </svg>
+            <span>1:1 Loop</span>
+          </a>
+          <div class="counter" aria-live="polite">
+            <span id="visible-count">0</span>
+            <span>questions</span>
+          </div>
+        </header>
+
+        <div class="stage-grid">
+          <aside class="filters" aria-label="Question filters">
+            <label class="search-wrap" for="search">
+              <span class="search-icon" aria-hidden="true">⌕</span>
+              <input id="search" type="search" placeholder="Search questions">
+            </label>
+
+            <div class="control-group" aria-label="Question direction">
+              <button class="segmented active" type="button" data-direction="all">All</button>
+              <button class="segmented" type="button" data-direction="manager">Manager</button>
+              <button class="segmented" type="button" data-direction="employee">Employee</button>
+            </div>
+
+            <nav class="category-list" id="category-list" aria-label="Categories"></nav>
+          </aside>
+
+          <section class="card-panel" aria-label="Current question">
+            <div class="question-card">
+              <div class="question-meta">
+                <span id="question-category">Category</span>
+                <span id="question-position">1 of 1</span>
+              </div>
+              <h1 id="app-title">Pick a better 1:1 question.</h1>
+              <p id="question-text" class="question-text">Loading question...</p>
+              <div class="question-actions">
+                <button class="icon-button" type="button" id="favorite" aria-label="Save favorite" title="Save favorite">
+                  <span aria-hidden="true">☆</span>
+                </button>
+                <button class="icon-button" type="button" id="copy" aria-label="Copy question" title="Copy question">
+                  <span aria-hidden="true">⧉</span>
+                </button>
+                <button class="primary-action" type="button" id="add-to-session">Add to session</button>
+              </div>
+            </div>
+
+            <div class="loop-controls" aria-label="Question controls">
+              <button class="secondary-action" type="button" id="previous">Previous</button>
+              <button class="primary-action large" type="button" id="shuffle">Shuffle</button>
+              <button class="secondary-action" type="button" id="next">Next</button>
+            </div>
+          </section>
+
+          <aside class="session-panel" aria-label="Session list">
+            <div class="panel-header">
+              <h2>Session</h2>
+              <button class="text-button" type="button" id="clear-session">Clear</button>
+            </div>
+            <ol class="session-list" id="session-list"></ol>
+            <div class="session-empty" id="session-empty">Saved questions for this conversation will appear here.</div>
+            <button class="export-action" type="button" id="export-session">Copy session notes</button>
+
+            <div class="panel-header favorites-header">
+              <h2>Favorites</h2>
+              <button class="text-button" type="button" id="show-favorites">Show</button>
+            </div>
+            <div class="favorite-count" id="favorite-count">0 saved</div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
