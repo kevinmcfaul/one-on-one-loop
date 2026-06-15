@@ -360,7 +360,7 @@ const categories = [
   }
 ];
 
-const questionBank = categories.flatMap((category, categoryIndex) =>
+const baseQuestionBank = categories.flatMap((category, categoryIndex) =>
   category.questions.map((text, questionIndex) => ({
     id: `${categoryIndex}-${questionIndex}`,
     category: category.name,
@@ -400,6 +400,8 @@ const questionBank = categories.flatMap((category, categoryIndex) =>
   }))
 );
 
+let questionBank = [...baseQuestionBank];
+
 const state = {
   category: "All",
   direction: "all",
@@ -408,6 +410,9 @@ const state = {
   index: 0,
   history: [],
   favorites: new Set(JSON.parse(localStorage.getItem("loop:favorites") || "[]")),
+  votes: JSON.parse(localStorage.getItem("loop:votes") || "{}"),
+  voted: new Set(JSON.parse(localStorage.getItem("loop:voted") || "[]")),
+  submitted: JSON.parse(localStorage.getItem("loop:submitted") || "[]"),
   session: JSON.parse(localStorage.getItem("loop:session") || "[]")
 };
 
@@ -420,6 +425,8 @@ const els = {
   search: document.querySelector("#search"),
   favorite: document.querySelector("#favorite"),
   copy: document.querySelector("#copy"),
+  vote: document.querySelector("#vote-useful"),
+  voteCount: document.querySelector("#vote-count"),
   add: document.querySelector("#add-to-session"),
   previous: document.querySelector("#previous"),
   next: document.querySelector("#next"),
@@ -430,8 +437,23 @@ const els = {
   exportSession: document.querySelector("#export-session"),
   favoriteCount: document.querySelector("#favorite-count"),
   showFavorites: document.querySelector("#show-favorites"),
+  form: document.querySelector("#question-form"),
+  submittedQuestion: document.querySelector("#submitted-question"),
+  submittedCategory: document.querySelector("#submitted-category"),
+  submittedCount: document.querySelector("#submitted-count"),
   toast: document.querySelector("#toast")
 };
+
+function refreshQuestionBank() {
+  const customQuestions = state.submitted.map((question, index) => ({
+    id: `custom-${index}`,
+    category: question.category,
+    text: question.text,
+    direction: "manager",
+    custom: true
+  }));
+  questionBank = [...baseQuestionBank, ...customQuestions];
+}
 
 function filteredQuestions() {
   const term = state.search.trim().toLowerCase();
@@ -453,7 +475,7 @@ function currentQuestion() {
 function renderCategories() {
   const allButton = categoryButton("All", questionBank.length);
   els.categoryList.replaceChildren(allButton, ...categories.map((category) =>
-    categoryButton(category.name, category.questions.length)
+    categoryButton(category.name, questionBank.filter((question) => question.category === category.name).length)
   ));
 }
 
@@ -484,6 +506,7 @@ function renderQuestion() {
     els.question.textContent = "Try a different filter or search.";
     els.favorite.disabled = true;
     els.copy.disabled = true;
+    els.vote.disabled = true;
     els.add.disabled = true;
     return;
   }
@@ -493,9 +516,12 @@ function renderQuestion() {
   els.question.textContent = question.text;
   els.favorite.disabled = false;
   els.copy.disabled = false;
+  els.vote.disabled = false;
   els.add.disabled = false;
   els.favorite.classList.toggle("active", state.favorites.has(question.id));
   els.favorite.querySelector("span").textContent = state.favorites.has(question.id) ? "★" : "☆";
+  els.vote.classList.toggle("active", state.voted.has(question.id));
+  els.voteCount.textContent = state.votes[question.id] || 0;
 }
 
 function renderSession() {
@@ -509,6 +535,17 @@ function renderSession() {
   els.exportSession.disabled = items.length === 0;
   els.favoriteCount.textContent = `${state.favorites.size} saved`;
   els.showFavorites.textContent = state.onlyFavorites ? "All" : "Show";
+  els.submittedCount.textContent = `${state.submitted.length} submitted`;
+}
+
+function renderSubmittedCategories() {
+  const options = categories.map((category) => {
+    const option = document.createElement("option");
+    option.value = category.name;
+    option.textContent = category.name;
+    return option;
+  });
+  els.submittedCategory.replaceChildren(...options);
 }
 
 function renderDirection() {
@@ -518,6 +555,7 @@ function renderDirection() {
 }
 
 function render() {
+  refreshQuestionBank();
   renderCategories();
   renderDirection();
   renderQuestion();
@@ -566,6 +604,15 @@ function saveSession() {
   localStorage.setItem("loop:session", JSON.stringify(state.session));
 }
 
+function saveVotes() {
+  localStorage.setItem("loop:votes", JSON.stringify(state.votes));
+  localStorage.setItem("loop:voted", JSON.stringify([...state.voted]));
+}
+
+function saveSubmitted() {
+  localStorage.setItem("loop:submitted", JSON.stringify(state.submitted));
+}
+
 document.querySelectorAll("[data-direction]").forEach((button) => {
   button.addEventListener("click", () => {
     state.direction = button.dataset.direction;
@@ -601,6 +648,23 @@ els.favorite.addEventListener("click", () => {
 els.copy.addEventListener("click", () => {
   const question = currentQuestion();
   if (question) copyText(question.text, "Question copied");
+});
+
+els.vote.addEventListener("click", () => {
+  const question = currentQuestion();
+  if (!question) return;
+  const currentVotes = state.votes[question.id] || 0;
+  if (state.voted.has(question.id)) {
+    state.voted.delete(question.id);
+    state.votes[question.id] = Math.max(currentVotes - 1, 0);
+    showToast("Vote removed");
+  } else {
+    state.voted.add(question.id);
+    state.votes[question.id] = currentVotes + 1;
+    showToast("Marked useful");
+  }
+  saveVotes();
+  renderQuestion();
 });
 
 els.add.addEventListener("click", () => {
@@ -657,6 +721,27 @@ els.showFavorites.addEventListener("click", () => {
   render();
 });
 
+els.form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const text = els.submittedQuestion.value.trim();
+  const category = els.submittedCategory.value;
+  if (text.length < 8 || !text.endsWith("?")) {
+    showToast("Add a complete question ending with a question mark");
+    return;
+  }
+  state.submitted.push({ text, category });
+  saveSubmitted();
+  state.category = category;
+  state.onlyFavorites = false;
+  state.search = "";
+  els.search.value = "";
+  els.submittedQuestion.value = "";
+  refreshQuestionBank();
+  state.index = filteredQuestions().findIndex((question) => question.text === text && question.category === category);
+  render();
+  showToast("Question added");
+});
+
 window.addEventListener("keydown", (event) => {
   if (event.target.matches("input")) return;
   if (event.key === "ArrowRight") goToIndex(state.index + 1);
@@ -667,4 +752,5 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
+renderSubmittedCategories();
 render();

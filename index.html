@@ -57,6 +57,7 @@
                 <button class="icon-button" type="button" id="copy" aria-label="Copy question" title="Copy question">
                   <span aria-hidden="true">⧉</span>
                 </button>
+                <button class="secondary-action compact" type="button" id="vote-useful">Useful <span id="vote-count">0</span></button>
                 <button class="primary-action" type="button" id="add-to-session">Add to session</button>
               </div>
             </div>
@@ -82,6 +83,20 @@
               <button class="text-button" type="button" id="show-favorites">Show</button>
             </div>
             <div class="favorite-count" id="favorite-count">0 saved</div>
+
+            <div class="submit-panel">
+              <div class="panel-header">
+                <h2>Submit a question</h2>
+              </div>
+              <form id="question-form" class="question-form">
+                <label for="submitted-question">Question</label>
+                <textarea id="submitted-question" rows="4" placeholder="What question do you use in 1:1s?"></textarea>
+                <label for="submitted-category">Category</label>
+                <select id="submitted-category"></select>
+                <button class="export-action" type="submit">Add question</button>
+              </form>
+              <div class="favorite-count" id="submitted-count">0 submitted</div>
+            </div>
           </aside>
         </div>
       </section>

@@ -32,6 +32,11 @@ input {
   font: inherit;
 }
 
+textarea,
+select {
+  font: inherit;
+}
+
 button {
   cursor: pointer;
 }
@@ -155,7 +160,9 @@ button {
 .secondary-action,
 .primary-action,
 .icon-button,
-.export-action {
+.export-action,
+.question-form textarea,
+.question-form select {
   border: 0;
   color: var(--ink);
 }
@@ -234,16 +241,7 @@ button {
 }
 
 .question-card::before {
-  content: "";
-  position: absolute;
-  inset: 20px 20px auto auto;
-  width: 128px;
-  height: 128px;
-  border: 18px solid rgba(143, 207, 176, 0.34);
-  border-left-color: rgba(233, 111, 88, 0.42);
-  border-bottom-color: rgba(217, 164, 65, 0.48);
-  border-radius: 50%;
-  pointer-events: none;
+  content: none;
 }
 
 .question-meta {
@@ -338,6 +336,27 @@ button {
   padding: 0 16px;
 }
 
+.secondary-action.compact {
+  min-width: 0;
+}
+
+#vote-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  min-height: 24px;
+  margin-left: 6px;
+  padding: 0 6px;
+  background: rgba(143, 207, 176, 0.28);
+  color: var(--mint-dark);
+}
+
+#vote-useful.active {
+  border-color: rgba(37, 98, 77, 0.46);
+  background: #ecf7f1;
+  color: var(--mint-dark);
+}
+
 .panel-header {
   display: flex;
   align-items: center;
@@ -389,6 +408,44 @@ button {
   margin-top: 28px;
 }
 
+.submit-panel {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.question-form {
+  display: grid;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.question-form label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.question-form textarea,
+.question-form select {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.question-form textarea {
+  min-height: 110px;
+  padding: 10px 12px;
+  resize: vertical;
+  line-height: 1.35;
+}
+
+.question-form select {
+  min-height: 42px;
+  padding: 0 10px;
+}
+
 .toast {
   position: fixed;
   left: 50%;
@@ -409,7 +466,9 @@ button {
 }
 
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
   outline: 3px solid rgba(79, 125, 187, 0.5);
   outline-offset: 2px;
 }
