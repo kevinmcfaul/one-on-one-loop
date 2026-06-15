@@ -181,6 +181,37 @@ button {
   box-shadow: 0 5px 16px rgba(31, 44, 39, 0.08);
 }
 
+.mode-panel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.mode-panel label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.mode-panel select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.mode-actions,
+.agenda-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .category-list {
   display: grid;
   gap: 8px;
@@ -392,6 +423,22 @@ button {
   line-height: 1.35;
 }
 
+.agenda-list li {
+  display: grid;
+  gap: 6px;
+}
+
+.agenda-slot {
+  color: var(--mint-dark);
+  font-size: 0.78rem;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.agenda-question {
+  display: block;
+}
+
 .session-empty,
 .favorite-count {
   margin: 14px 0;
@@ -402,6 +449,10 @@ button {
 .export-action {
   width: 100%;
   padding: 0 12px;
+}
+
+.agenda-actions {
+  margin-bottom: 24px;
 }
 
 .favorites-header {

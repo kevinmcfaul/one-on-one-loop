@@ -39,6 +39,16 @@
               <button class="segmented" type="button" data-direction="employee">Employee</button>
             </div>
 
+            <div class="mode-panel">
+              <label for="meeting-mode">Meeting mode</label>
+              <select id="meeting-mode"></select>
+              <div class="mode-actions">
+                <button class="secondary-action compact" type="button" id="apply-mode">Filter</button>
+                <button class="primary-action" type="button" id="build-agenda">Build agenda</button>
+              </div>
+              <div class="favorite-count" id="mode-status">All questions</div>
+            </div>
+
             <nav class="category-list" id="category-list" aria-label="Categories"></nav>
           </aside>
 
@@ -70,6 +80,18 @@
           </section>
 
           <aside class="session-panel" aria-label="Session list">
+            <div class="panel-header">
+              <h2>Conversation</h2>
+              <button class="text-button" type="button" id="clear-agenda">Clear</button>
+            </div>
+            <div class="favorite-count" id="agenda-mode">Choose a meeting mode to build an agenda.</div>
+            <ol class="session-list agenda-list" id="agenda-list"></ol>
+            <div class="session-empty" id="agenda-empty">A balanced 1:1 agenda will appear here.</div>
+            <div class="agenda-actions">
+              <button class="export-action" type="button" id="copy-agenda">Copy agenda</button>
+              <button class="export-action" type="button" id="add-agenda-session">Add to session</button>
+            </div>
+
             <div class="panel-header">
               <h2>Session</h2>
               <button class="text-button" type="button" id="clear-session">Clear</button>

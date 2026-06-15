@@ -402,11 +402,110 @@ const baseQuestionBank = categories.flatMap((category, categoryIndex) =>
 
 let questionBank = [...baseQuestionBank];
 
+const meetingModes = [
+  {
+    key: "weekly",
+    label: "Weekly check-in",
+    categories: ["Check-In & Wellbeing", "Current Work & Priorities", "Roadblocks & Support", "Closing & Wrap-Up"],
+    slots: [
+      { label: "Open", categories: ["Check-In & Wellbeing"] },
+      { label: "Priorities", categories: ["Current Work & Priorities"] },
+      { label: "Support", categories: ["Roadblocks & Support"] },
+      { label: "Close", categories: ["Closing & Wrap-Up"] }
+    ]
+  },
+  {
+    key: "career",
+    label: "Career development",
+    categories: ["Growth & Career Development", "Motivation & Engagement", "Feedback & Communication", "Closing & Wrap-Up"],
+    slots: [
+      { label: "Energy", categories: ["Motivation & Engagement"] },
+      { label: "Growth", categories: ["Growth & Career Development"] },
+      { label: "Coaching", categories: ["Feedback & Communication"] },
+      { label: "Commitment", categories: ["Closing & Wrap-Up"] }
+    ]
+  },
+  {
+    key: "performance",
+    label: "Performance coaching",
+    categories: ["Performance & New Ideas", "Current Work & Priorities", "Roadblocks & Support", "Feedback & Communication", "Closing & Wrap-Up"],
+    slots: [
+      { label: "Progress", categories: ["Performance & New Ideas"] },
+      { label: "Priority", categories: ["Current Work & Priorities"] },
+      { label: "Barrier", categories: ["Roadblocks & Support"] },
+      { label: "Feedback", categories: ["Feedback & Communication"] },
+      { label: "Next step", categories: ["Closing & Wrap-Up"] }
+    ]
+  },
+  {
+    key: "new-hire",
+    label: "New hire 30/60/90",
+    categories: ["New Employee & First 1:1", "Check-In & Wellbeing", "Roadblocks & Support", "Team & Collaboration", "Closing & Wrap-Up"],
+    slots: [
+      { label: "Settling in", categories: ["New Employee & First 1:1"] },
+      { label: "Connection", categories: ["Team & Collaboration"] },
+      { label: "Support", categories: ["Roadblocks & Support"] },
+      { label: "Next step", categories: ["Closing & Wrap-Up"] }
+    ]
+  },
+  {
+    key: "burnout",
+    label: "Burnout risk",
+    categories: ["Check-In & Wellbeing", "Current Work & Priorities", "Roadblocks & Support", "Motivation & Engagement", "Closing & Wrap-Up"],
+    slots: [
+      { label: "Wellbeing", categories: ["Check-In & Wellbeing"] },
+      { label: "Load", categories: ["Current Work & Priorities"] },
+      { label: "Support", categories: ["Roadblocks & Support"] },
+      { label: "Energy", categories: ["Motivation & Engagement"] },
+      { label: "Follow-up", categories: ["Closing & Wrap-Up"] }
+    ]
+  },
+  {
+    key: "skip-level",
+    label: "Skip-level",
+    categories: ["Team & Collaboration", "Company, Culture & Strategy", "Motivation & Engagement", "Roadblocks & Support", "Closing & Wrap-Up"],
+    slots: [
+      { label: "Team view", categories: ["Team & Collaboration"] },
+      { label: "Company view", categories: ["Company, Culture & Strategy"] },
+      { label: "Engagement", categories: ["Motivation & Engagement"] },
+      { label: "Support", categories: ["Roadblocks & Support"] },
+      { label: "Close", categories: ["Closing & Wrap-Up"] }
+    ]
+  },
+  {
+    key: "remote",
+    label: "Remote check-in",
+    categories: ["Remote Employees", "Check-In & Wellbeing", "Team & Collaboration", "Roadblocks & Support", "Closing & Wrap-Up"],
+    slots: [
+      { label: "Connection", categories: ["Remote Employees"] },
+      { label: "Wellbeing", categories: ["Check-In & Wellbeing"] },
+      { label: "Collaboration", categories: ["Team & Collaboration"] },
+      { label: "Support", categories: ["Roadblocks & Support"] },
+      { label: "Close", categories: ["Closing & Wrap-Up"] }
+    ]
+  },
+  {
+    key: "difficult",
+    label: "Difficult conversation",
+    categories: ["Feedback & Communication", "Performance & New Ideas", "Roadblocks & Support", "Check-In & Wellbeing", "Closing & Wrap-Up"],
+    slots: [
+      { label: "Open safely", categories: ["Check-In & Wellbeing", "Feedback & Communication"] },
+      { label: "Situation", categories: ["Performance & New Ideas"] },
+      { label: "Obstacle", categories: ["Roadblocks & Support"] },
+      { label: "Working together", categories: ["Feedback & Communication"] },
+      { label: "Next step", categories: ["Closing & Wrap-Up"] }
+    ]
+  }
+];
+
 const state = {
   category: "All",
   direction: "all",
   search: "",
   onlyFavorites: false,
+  meetingMode: localStorage.getItem("loop:meetingMode") || "weekly",
+  activeMode: localStorage.getItem("loop:activeMode") || "",
+  agenda: JSON.parse(localStorage.getItem("loop:agenda") || "[]"),
   index: 0,
   history: [],
   favorites: new Set(JSON.parse(localStorage.getItem("loop:favorites") || "[]")),
@@ -431,6 +530,16 @@ const els = {
   previous: document.querySelector("#previous"),
   next: document.querySelector("#next"),
   shuffle: document.querySelector("#shuffle"),
+  meetingMode: document.querySelector("#meeting-mode"),
+  applyMode: document.querySelector("#apply-mode"),
+  buildAgenda: document.querySelector("#build-agenda"),
+  modeStatus: document.querySelector("#mode-status"),
+  agendaMode: document.querySelector("#agenda-mode"),
+  agendaList: document.querySelector("#agenda-list"),
+  agendaEmpty: document.querySelector("#agenda-empty"),
+  copyAgenda: document.querySelector("#copy-agenda"),
+  addAgendaSession: document.querySelector("#add-agenda-session"),
+  clearAgenda: document.querySelector("#clear-agenda"),
   sessionList: document.querySelector("#session-list"),
   sessionEmpty: document.querySelector("#session-empty"),
   clearSession: document.querySelector("#clear-session"),
@@ -455,10 +564,19 @@ function refreshQuestionBank() {
   questionBank = [...baseQuestionBank, ...customQuestions];
 }
 
+function selectedMode() {
+  return meetingModes.find((mode) => mode.key === state.meetingMode) || meetingModes[0];
+}
+
+function activeMode() {
+  return meetingModes.find((mode) => mode.key === state.activeMode);
+}
+
 function filteredQuestions() {
   const term = state.search.trim().toLowerCase();
+  const mode = activeMode();
   return questionBank.filter((question) => {
-    const categoryMatch = state.category === "All" || question.category === state.category;
+    const categoryMatch = state.category === "All" ? !mode || mode.categories.includes(question.category) : question.category === state.category;
     const directionMatch = state.direction === "all" || question.direction === state.direction;
     const favoriteMatch = !state.onlyFavorites || state.favorites.has(question.id);
     const searchMatch = !term || `${question.text} ${question.category}`.toLowerCase().includes(term);
@@ -487,6 +605,8 @@ function categoryButton(name, count) {
   button.innerHTML = `<span>${name}</span><span>${count}</span>`;
   button.addEventListener("click", () => {
     state.category = name;
+    state.activeMode = "";
+    saveMode();
     state.onlyFavorites = false;
     state.index = 0;
     state.history = [];
@@ -524,6 +644,29 @@ function renderQuestion() {
   els.voteCount.textContent = state.votes[question.id] || 0;
 }
 
+function renderAgenda() {
+  const mode = selectedMode();
+  const items = state.agenda.map((item) => {
+    const question = questionBank.find((candidate) => candidate.id === item.id);
+    return question ? { ...item, question } : null;
+  }).filter(Boolean);
+  els.agendaMode.textContent = items.length ? `${mode.label} agenda` : "Choose a meeting mode to build an agenda.";
+  els.agendaList.replaceChildren(...items.map((item) => {
+    const li = document.createElement("li");
+    const slot = document.createElement("span");
+    const question = document.createElement("span");
+    slot.className = "agenda-slot";
+    question.className = "agenda-question";
+    slot.textContent = item.slot;
+    question.textContent = item.question.text;
+    li.replaceChildren(slot, question);
+    return li;
+  }));
+  els.agendaEmpty.hidden = items.length > 0;
+  els.copyAgenda.disabled = items.length === 0;
+  els.addAgendaSession.disabled = items.length === 0;
+}
+
 function renderSession() {
   const items = state.session.map((id) => questionBank.find((question) => question.id === id)).filter(Boolean);
   els.sessionList.replaceChildren(...items.map((question) => {
@@ -536,6 +679,17 @@ function renderSession() {
   els.favoriteCount.textContent = `${state.favorites.size} saved`;
   els.showFavorites.textContent = state.onlyFavorites ? "All" : "Show";
   els.submittedCount.textContent = `${state.submitted.length} submitted`;
+}
+
+function renderMeetingModes() {
+  const options = meetingModes.map((mode) => {
+    const option = document.createElement("option");
+    option.value = mode.key;
+    option.textContent = mode.label;
+    return option;
+  });
+  els.meetingMode.replaceChildren(...options);
+  els.meetingMode.value = state.meetingMode;
 }
 
 function renderSubmittedCategories() {
@@ -559,7 +713,10 @@ function render() {
   renderCategories();
   renderDirection();
   renderQuestion();
+  renderAgenda();
   renderSession();
+  const mode = activeMode();
+  els.modeStatus.textContent = mode ? `Filtering: ${mode.label}` : "All questions";
 }
 
 function goToIndex(index) {
@@ -604,6 +761,15 @@ function saveSession() {
   localStorage.setItem("loop:session", JSON.stringify(state.session));
 }
 
+function saveMode() {
+  localStorage.setItem("loop:meetingMode", state.meetingMode);
+  localStorage.setItem("loop:activeMode", state.activeMode);
+}
+
+function saveAgenda() {
+  localStorage.setItem("loop:agenda", JSON.stringify(state.agenda));
+}
+
 function saveVotes() {
   localStorage.setItem("loop:votes", JSON.stringify(state.votes));
   localStorage.setItem("loop:voted", JSON.stringify([...state.voted]));
@@ -622,6 +788,58 @@ document.querySelectorAll("[data-direction]").forEach((button) => {
     render();
   });
 });
+
+els.meetingMode.addEventListener("change", (event) => {
+  state.meetingMode = event.target.value;
+  saveMode();
+  renderAgenda();
+});
+
+els.applyMode.addEventListener("click", () => {
+  state.activeMode = state.activeMode === state.meetingMode ? "" : state.meetingMode;
+  state.category = "All";
+  state.search = "";
+  state.onlyFavorites = false;
+  state.index = 0;
+  state.history = [];
+  els.search.value = "";
+  saveMode();
+  render();
+});
+
+function pickQuestionForSlot(slot, usedIds) {
+  const candidates = questionBank
+    .filter((question) => slot.categories.includes(question.category) && !usedIds.has(question.id))
+    .sort((left, right) => (state.votes[right.id] || 0) - (state.votes[left.id] || 0));
+  if (!candidates.length) return null;
+  const topScore = state.votes[candidates[0].id] || 0;
+  const topCandidates = candidates.filter((question) => (state.votes[question.id] || 0) === topScore);
+  return topCandidates[Math.floor(Math.random() * topCandidates.length)];
+}
+
+function buildAgenda() {
+  const mode = selectedMode();
+  const usedIds = new Set();
+  state.agenda = mode.slots.map((slot) => {
+    const question = pickQuestionForSlot(slot, usedIds);
+    if (!question) return null;
+    usedIds.add(question.id);
+    return { slot: slot.label, id: question.id };
+  }).filter(Boolean);
+  state.activeMode = mode.key;
+  state.category = "All";
+  state.search = "";
+  state.onlyFavorites = false;
+  state.index = 0;
+  state.history = [];
+  els.search.value = "";
+  saveAgenda();
+  saveMode();
+  render();
+  showToast("Agenda built");
+}
+
+els.buildAgenda.addEventListener("click", buildAgenda);
 
 els.search.addEventListener("input", (event) => {
   state.search = event.target.value;
@@ -706,6 +924,40 @@ els.exportSession.addEventListener("click", () => {
   copyText(notes, "Session notes copied");
 });
 
+function agendaItems() {
+  return state.agenda.map((item) => {
+    const question = questionBank.find((candidate) => candidate.id === item.id);
+    return question ? { ...item, question } : null;
+  }).filter(Boolean);
+}
+
+els.copyAgenda.addEventListener("click", () => {
+  const mode = selectedMode();
+  const notes = [`# ${mode.label} 1:1 agenda`, "", ...agendaItems().map((item, index) => `${index + 1}. ${item.slot}: ${item.question.text}`)].join("\n");
+  copyText(notes, "Agenda copied");
+});
+
+els.addAgendaSession.addEventListener("click", () => {
+  const items = agendaItems();
+  let added = 0;
+  items.forEach((item) => {
+    if (!state.session.includes(item.id)) {
+      state.session.push(item.id);
+      added += 1;
+    }
+  });
+  saveSession();
+  renderSession();
+  showToast(added ? "Agenda added to session" : "Agenda already in session");
+});
+
+els.clearAgenda.addEventListener("click", () => {
+  state.agenda = [];
+  saveAgenda();
+  renderAgenda();
+  showToast("Agenda cleared");
+});
+
 els.showFavorites.addEventListener("click", () => {
   const favoriteIds = [...state.favorites];
   if (!favoriteIds.length) {
@@ -752,5 +1004,6 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
+renderMeetingModes();
 renderSubmittedCategories();
 render();
